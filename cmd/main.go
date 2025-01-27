@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"thumbnail/internal/app"
 
@@ -62,12 +63,22 @@ func runServer() {
 	a.Stop()
 }
 
-func runClient(outputDir string, async bool, urls []string) {
+func runClient(outputDir string, async bool, urls []string) error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		log.Fatalf("failed to create output directory %s: %v", outputDir, err)
 	}
+	host := os.Getenv("GRPC_HOST")
+	if host == "" {
+		return fmt.Errorf("GRPC_HOST environment variable is required")
+	}
 
-	con, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	portStr := os.Getenv("GRPC_PORT")
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return fmt.Errorf("GRPC_PORT environment variable is required")
+	}
+	address := fmt.Sprintf("%s:%d", host, port)
+	con, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("failed to connect to server: %v", err)
 	}
@@ -80,6 +91,7 @@ func runClient(outputDir string, async bool, urls []string) {
 	} else {
 		downloadThumbnailsSync(client, urls, outputDir)
 	}
+	return nil
 }
 
 func downloadThumbnailsSync(client pb.ThumbnailServiceClient, urls []string, outputDir string) {
