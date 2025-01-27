@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package thumnail;
+
+option go_package = ".com/likesense/yt_test_experience/internal/transport/thumbnail";
+
+service ThumbnailService {
+    rpc GetThumbnail(GetThumbnailRequest) returns (ThumbnailResponse);
+    rpc GetThumbnailAsync(GetThumbnailsRequestAsync) returns (stream ThumbnailResponse);
+}
+
+message GetThumbnailRequest {
+    string url = 1;
+}
+
+message GetThumbnailsRequestAsync {
+    repeated string urls = 1;
+}
+
+message ThumbnailResponse {
+    string url = 1;
+    bytes thumbnail = 2;
+    string error = 3;
+}
